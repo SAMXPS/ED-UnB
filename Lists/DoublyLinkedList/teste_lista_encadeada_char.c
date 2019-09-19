@@ -233,7 +233,7 @@ void testa_retira_em_ordem() {
     info = 'a';
     e = retira_em_ordem(&info, &lista);
     assert(e);
-    assert(1 == e->info);
+    assert('a' == e->info);
     assert(vazia(lista));
 }
 
