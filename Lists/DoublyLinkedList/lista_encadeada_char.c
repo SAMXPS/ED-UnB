@@ -134,7 +134,7 @@ unsigned int tamanho(const lista_t* lista) {
 }
 
 _Bool vazia(const lista_t *lista) {
-    return !tamanho(lista);
+    return !lista;
 }
 
 void print_i(const info_t* info) {
