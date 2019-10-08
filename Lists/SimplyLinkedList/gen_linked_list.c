@@ -93,6 +93,74 @@ int remove_final(list *b,  data* val){
 	return 0;
 }
 
+int remove_val(list *b, data val) {
+    int count = 0;
+
+    element** aux, *bux, *cux = NULL;
+    aux = &(b->first);
+
+    while (*aux) { // TODO: FIX SEGFAULT HERE
+        if ((*aux)->val == val) {
+            bux = *aux;
+            *aux = (*aux)->next;
+            free(bux);
+            count++;
+        } else {
+            cux = *aux;
+            aux = &(bux->next);
+        }
+    }
+
+    b->last = cux;
+    b->size -= count;
+
+    return count;
+}
+
+int remove_pos(list*b, int pos, data* val) {
+    if (pos == 0) return remove_begin(b, val);
+    if (pos == b->size-1) return remove_final(b, val);
+
+    int i;
+    element * aux, **p;
+
+    for (p = &(b->first), i=0; i<pos && *p; i++, p = &((*p)->next));
+    if (i==pos) {
+        aux = *p;
+        if (aux) {
+            *val = aux->val;
+            *p = aux->next;
+            free(aux);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int count(const list* const b, const data find) {
+    int c = 0;
+    element *aux;
+    aux = b->first;
+    while (aux) {
+        if (aux->val == find) c++;
+        aux = aux->next;
+    }
+    return c;
+}
+
+int change_first(const list* const b, data v1, data v2) {
+    int c = 0;
+    element *aux;
+    aux = b->first;
+    while (aux) {
+        if (aux->val == v1) {
+            aux->val = v2;
+            return 1;
+        }
+        aux = aux->next;
+    }
+    return 0;
+}
 
 
 void free_list (list *b) {
@@ -137,7 +205,7 @@ X Indica o final das operações e que a lista resultante deve ser impressa.
 int main() {
 
 	char opcode;
-	int v;
+	int v, v2;
 	list list = getEmptyList();
     element* aux;
 
@@ -160,16 +228,18 @@ int main() {
                     insert_final(&list, v);
 				break;
 				case REMOVE_VAL:
-
+                    printf("%d\n", remove_val(&list, v));
 				break;
 				case REMOVE_POS:
-
+                    remove_pos(&list, v, &v);
+                    printf("%d\n", v);
 				break;
 				case CHANGE_FIRST:
-
+                    scanf("%d", &v2);
+                    change_first(&list, v, v2);
 				break;
 				case COUNT:
-
+                    printf("%d\n", count(&list, v));
 				break;
 			}
 		}
