@@ -230,6 +230,18 @@ unsigned int countVal(list_t* const list, const data val, int (*datacmp)(data a,
     return count;
 }
 
+bool elementPos(list_t* list, element_t* e, unsigned int* pos) {
+    element_t *p;
+    unsigned int i;
+    for (p = list->first, i=0; p; p = p->next, i++) {
+        if (p == e) {
+            *pos = i;
+            return true;
+        }
+    }
+    return false;
+}
+
 element_t** findVal(list_t* const list, const data val, int (*datacmp)(data a, data b), unsigned int *pos) {
     element_t ** e = &(list->first);
     for (*pos=0; *e; (*pos)++) {

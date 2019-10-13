@@ -29,8 +29,6 @@ element_t*  createElement(data val, unsigned int data_len);
 element_t*  elementAt(list_t* const list, const unsigned int pos);
 list_t*     createList(unsigned int type_len);
 
-
-
 bool isEmpty(list_t* const list);
 
 bool insertFirst(list_t* const list, const data val);
@@ -45,9 +43,12 @@ void removeAll(list_t* const list);
 void freeList(list_t** list);
 void printList(list_t* const list);
 
+bool elementPos(list_t* list, element_t* e, unsigned int* pos);
+
 unsigned int removeVal(list_t* const list, const data val, int (*datacmp)(data a, data b));
 unsigned int countVal(list_t* const list, const data val, int (*datacmp)(data a, data b));
 element_t**  findVal(list_t* const list, const data val, int (*datacmp)(data a, data b), unsigned int *pos);
+
 
 /* datacmp(data a, data b) should return 0 when the two data are equal,
   * positive if a > b,
