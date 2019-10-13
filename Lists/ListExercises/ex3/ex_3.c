@@ -17,6 +17,8 @@ C Retorna ocorrencias de valor.
 X Indica o final das operações e que a lista resultante deve ser impressa.
 */
 
+#include "../../SimplyLinkedList/linked_list.c"
+
 #define INSERT_BEGIN 'I'
 #define INSERT_FINAL 'F'
 #define REMOVE_FINAL 'P'
@@ -26,58 +28,66 @@ X Indica o final das operações e que a lista resultante deve ser impressa.
 #define CHANGE_FIRST 'T'
 #define COUNT 'C'
 #define END 'X'
+#define DEBUG 0
 
 int main() {
 
 	char opcode;
 	int v, v2;
-	list_t list_t = createList();
+    int runs = 0;
+    unsigned int pos;
+	list_t* list = createList();
     element_t* aux;
 
 	// READ COMMANDS AND INSERT DATA INTO THE LIST
 
-	while (scanf("%c", &opcode) && opcode != END)  {
-		if (opcode == REMOVE_FINAL) {
-            remove_final(&list_t, &v);
+	while (scanf("%c", &opcode) && opcode != END && (runs++ < 50))  {
+        if (opcode == '\n' || opcode == ' ')
+            continue;
+		if (DEBUG) printf("Code: %c\n", opcode);
+        if (opcode == REMOVE_FINAL) {
+            removeLast(list, &v);
             printf("%d\n", v);
 		} else if (opcode == REMOVE_BEGIN){
-            remove_begin(&list_t, &v);
+            removeFirst(list, &v);
             printf("%d\n", v);
         } else {
 			scanf("%d", &v);
 			switch(opcode) {
 				case INSERT_BEGIN:
-                    insert_begin(&list_t, v);
+                    insertFirst(list, v);
 				break;
 				case INSERT_FINAL:
-                    insert_final(&list_t, v);
+                    insertLast(list, v);
 				break;
 				case REMOVE_VAL:
-                    printf("%d\n", remove_val(&list_t, v));
+                    printf("%d\n", removeVal(list, v));
 				break;
 				case REMOVE_POS:
-                    remove_pos(&list_t, v, &v);
+                    removeAt(list, &v, (unsigned int) v - 1);
                     printf("%d\n", v);
 				break;
 				case CHANGE_FIRST:
-                    scanf("%d", &v2);
-                    change_first(&list_t, v, v2);
+                    scanf("%d", &((*findVal(list, v, &pos))->val));
 				break;
 				case COUNT:
-                    printf("%d\n", count(&list_t, v));
+                    printf("%u\n", countVal(list, v));
 				break;
 			}
 		}
-	}
+        if (DEBUG) printList(list);
+    }
 
 	// PRINT THE LIST
     printf("\n");
 
-    if(list_t.size > 0){
-        aux = list_t.first;
+    if(list->size > 0){
+        aux = list->first;
         while (printf("%d\n", aux->val) && (aux = aux->next));
-        free_list(&list_t);
+        removeAll(list);
     }
+
+    free(list);
 
 	return 0;
 }
