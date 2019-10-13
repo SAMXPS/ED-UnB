@@ -41,7 +41,6 @@ bool removeAt(list_t* const list, data* val, const unsigned int pos);
 
 void removeAll(list_t* const list);
 void freeList(list_t** list);
-void printList(list_t* const list);
 
 bool elementPos(list_t* list, element_t* e, unsigned int* pos);
 
