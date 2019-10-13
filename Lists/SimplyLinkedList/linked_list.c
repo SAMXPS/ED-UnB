@@ -1,11 +1,28 @@
+/*
+Lista Encadeada Simples - Implementação
+@author: Samuel James
+https://github.com/SAMXPS
+Universidade de Brasília, UnB
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h> /* for memcpy */
 #include "linked_list.h"
 
-element_t* createElement(data val) {
+element_t* createElement(data val, unsigned int data_len) {
     element_t* el = calloc(1, sizeof(element_t));
-    if (el)
-        el->val = val;
+    void* data_p;
+    if (el) {
+        data_p = malloc(data_len);
+        if (data_p) {
+            memcpy(data_p, val, data_len);
+            el->val = data_p;
+        } else {
+            free(el);
+            el = NULL;
+        }
+    }
     return el;
 }
 
@@ -16,18 +33,12 @@ element_t* elementAt(list_t* const list, const unsigned int pos) {
     return e;
 }
 
-element_t** findVal(list_t* const list, const data val, unsigned int *pos) {
-    element_t ** e = &(list->first);
-    for (*pos=0; *e; (*pos)++) {
-        if ((*e)->val == val)
-            return e;
-        e = &((*e)->next);
+list_t* createList(unsigned int type_len) {
+    list_t* list = calloc(1, sizeof(list_t));
+    if (list) {
+        list->type_len = type_len;
     }
-    return NULL;
-}
-
-list_t* createList() {
-    return calloc(1, sizeof(list_t));
+    return list;
 }
 
 bool isEmpty(list_t *const list) {
@@ -35,7 +46,7 @@ bool isEmpty(list_t *const list) {
 }
 
 bool insertFirst(list_t* const list, const data val) {
-    element_t* e = createElement(val);
+    element_t* e = createElement(val, list->type_len);
 	if (!e)
         return false;
 
@@ -50,7 +61,7 @@ bool insertFirst(list_t* const list, const data val) {
 }
 
 bool insertLast(list_t* const list, const data val){
-	element_t* e = createElement(val);
+	element_t* e = createElement(val, list->type_len);
 	if (!e)
         return false;
 
@@ -72,7 +83,7 @@ bool insertAt(list_t* const list, const data val, const unsigned int pos){
     else if (pos > list->size)
         return false;
 
-	element_t* e = createElement(val);
+	element_t* e = createElement(val, list->type_len);
 	if (!e)
         return false;
 
@@ -149,6 +160,7 @@ void removeAll(list_t* const list) {
 
     while ((aux = list->first) != NULL) {
         list->first = aux->next;
+        free(aux->val);
         free(aux);
     }
 
@@ -164,12 +176,13 @@ void freeList(list_t** list) {
     *list = NULL;
 }
 
+/*only works for integer data type*/
 void printList(list_t* const list) {
     element_t *aux = list->first;
     printf("List[%d] : {", list->size);
     if (list->size) {
         while (aux) {
-            printf(" %d,", aux->val);
+            printf(" %d,", *(int*)(aux->val));
             aux = aux->next;
         }
         printf("\b }\n");
@@ -178,7 +191,7 @@ void printList(list_t* const list) {
     }
 }
 
-unsigned int removeVal(list_t* const list, const data val) {
+unsigned int removeVal(list_t* const list, const data val, int (*datacmp)(data a, data b)) {
     int count = 0;
 
     element_t* aux = list->first;
@@ -186,8 +199,9 @@ unsigned int removeVal(list_t* const list, const data val) {
     element_t **p_aux = &(list->first);
 
     while(aux) {
-        if (aux->val == val) {
+        if (!(*datacmp)(aux->val, val)) {
             *p_aux = aux->next;
+            free(aux->val);
             free(aux);
             aux = *p_aux;
             count++;
@@ -204,54 +218,24 @@ unsigned int removeVal(list_t* const list, const data val) {
     return count;
 }
 
-unsigned int countVal(list_t* const list, const data val){
+unsigned int countVal(list_t* const list, const data val, int (*datacmp)(data a, data b)) {
     int count = 0;
     element_t *aux;
     aux = list->first;
     while (aux) {
-        if (aux->val == val)
+        if (!(*datacmp)(aux->val, val))
             count++;
         aux = aux->next;
     }
     return count;
 }
-/*
 
-int remove_val(list_t *list, data val) {
-    int count = 0;
-
-    element_t** aux, *bux, *cux = NULL;
-    aux = &(list->first);
-
-    while (*aux) { // TODO: FIX SEGFAULT HERE
-        if ((*aux)->val == val) {
-            bux = *aux;
-            *aux = (*aux)->next;
-            free(bux);
-            count++;
-        } else {
-            cux = *aux;
-            aux = &(bux->next);
-        }
+element_t** findVal(list_t* const list, const data val, int (*datacmp)(data a, data b), unsigned int *pos) {
+    element_t ** e = &(list->first);
+    for (*pos=0; *e; (*pos)++) {
+        if (!(*datacmp)((*e)->val, val))
+            return e;
+        e = &((*e)->next);
     }
-
-    list->last = cux;
-    list->size -= count;
-
-    return count;
+    return NULL;
 }
-
-
-int change_first(list_t* const const b, data v1, data v2) {
-    int c = 0;
-    element_t *aux;
-    aux = list->first;
-    while (aux) {
-        if (aux->val == v1) {
-            aux->val = v2;
-            return 1;
-        }
-        aux = aux->next;
-    }
-    return 0;
-}*/
