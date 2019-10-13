@@ -1,5 +1,5 @@
 /* start includes*/
-#include "../SimplyLinkedList/linked_list.c"
+#include "../linked_list.c"
 /*end includes */
 
 /*implementação do backlista*/

@@ -17,7 +17,7 @@ C Retorna ocorrencias de valor.
 X Indica o final das operações e que a lista resultante deve ser impressa.
 */
 
-#include "../../SimplyLinkedList/linked_list.c"
+#include "../linked_list.c"
 
 #define INSERT_BEGIN 'I'
 #define INSERT_FINAL 'F'
@@ -30,14 +30,21 @@ X Indica o final das operações e que a lista resultante deve ser impressa.
 #define END 'X'
 #define DEBUG 0
 
+int datacmp(data da, data db) {
+    return *(int*)da - *(int*)db;
+}
+
 int main() {
 
 	char opcode;
 	int v, v2;
     int runs = 0;
     unsigned int pos;
-	list_t* list = createList();
+	list_t* list = createList(sizeof(int));
     element_t* aux;
+    int* p;
+
+    #define bindp(a, b) 0*(a=b) + &a
 
 	// READ COMMANDS AND INSERT DATA INTO THE LIST
 
@@ -55,23 +62,24 @@ int main() {
 			scanf("%d", &v);
 			switch(opcode) {
 				case INSERT_BEGIN:
-                    insertFirst(list, v);
+                    insertFirst(list, &v);
 				break;
 				case INSERT_FINAL:
-                    insertLast(list, v);
+                    insertLast(list, &v);
 				break;
 				case REMOVE_VAL:
-                    printf("%d\n", removeVal(list, v));
+                    printf("%d\n", removeVal(list, &v, &datacmp));
 				break;
 				case REMOVE_POS:
-                    removeAt(list, &v, (unsigned int) v - 1);
-                    printf("%d\n", v);
+                    removeAt(list, &p, (unsigned int) v - 1);
+                    printf("%d\n", *p);
+                    free(p);
 				break;
 				case CHANGE_FIRST:
-                    scanf("%d", &((*findVal(list, v, &pos))->val));
+                    scanf("%d", &((*findVal(list, &v, &datacmp, &pos))->val));
 				break;
 				case COUNT:
-                    printf("%u\n", countVal(list, v));
+                    printf("%u\n", countVal(list, &v, &datacmp));
 				break;
 			}
 		}
