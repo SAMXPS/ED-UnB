@@ -8,12 +8,12 @@ int datacmp(data da, data db) {
 
 int main() {
     list_t* list = createTypeList(int);
-    int v;
+    int v, i;
     unsigned int p;
 
     assert(list);
 
-    for (int i=0; i<10; i++)
+    for (i=0; i<10; i++)
         insertFirst(list, &i);
 
     printList(list);
@@ -23,10 +23,9 @@ int main() {
 
     assert(isEmpty(list));
 
-    for (int i=0; i<10; i++)
+    for (i=0; i<10; i++)
         insertLast(list, &i);
 
     printList(list);
-
 
 }

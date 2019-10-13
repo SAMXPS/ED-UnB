@@ -27,8 +27,9 @@ element_t* createElement(data val, unsigned int data_len) {
 }
 
 element_t* elementAt(list_t* const list, const unsigned int pos) {
+    int i;
     element_t * e = list->first;
-    for (int i=0; e && i<pos; i++)
+    for (i=0; e && i<pos; i++)
         e = e->next;
     return e;
 }
@@ -83,8 +84,8 @@ bool insertAt(list_t* const list, const data val, const unsigned int pos){
     else if (pos > list->size)
         return false;
 
-	element_t* e = createElement(val, list->type_len);
-	if (!e)
+    element_t* e = createElement(val, list->type_len);
+    if (!e)
         return false;
 
     element_t* prev = elementAt(list, pos-1);
