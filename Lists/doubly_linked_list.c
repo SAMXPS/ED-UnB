@@ -7,7 +7,6 @@ Universidade de Brasília, UnB
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h> /* for memcpy */
 
 #include "doubly_linked_list.h"
@@ -15,7 +14,15 @@ Universidade de Brasília, UnB
 element_t* elementAt(list_t* list, unsigned int pos) {
     element_t* e;
     unsigned int i;
-    for (i = 0, e = list->first; e && i<pos; e = e->next, i++);
+    if (!list || pos > list->size-1) return NULL;
+
+    if (pos <= list->size / 2){
+        /* seeks forwards */
+        for (i = 0, e = list->first; e && i<pos; e = e->next, i++);
+    } else {
+        /* seeks backwards */
+        for (i = list->size-1, e = list->last; e && i>pos; e = e->prev, i--);
+    }
     return e;
 }
 

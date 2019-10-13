@@ -7,6 +7,7 @@ Universidade de Brasília, UnB
 
 #ifndef DOUBLY_LINKED_LIST_H
 #define DOUBLY_LINKED_LIST_H
+#include <stdbool.h>
 
 typedef struct element_t {
 	void* data;
