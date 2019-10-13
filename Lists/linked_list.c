@@ -177,21 +177,6 @@ void freeList(list_t** list) {
     *list = NULL;
 }
 
-/*only works for integer data type*/
-void printList(list_t* const list) {
-    element_t *aux = list->first;
-    printf("List[%d] : {", list->size);
-    if (list->size) {
-        while (aux) {
-            printf(" %d,", *(int*)(aux->val));
-            aux = aux->next;
-        }
-        printf("\b }\n");
-    } else {
-        printf(" }\n");
-    }
-}
-
 unsigned int removeVal(list_t* const list, const data val, int (*datacmp)(data a, data b)) {
     int count = 0;
 
