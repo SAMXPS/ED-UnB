@@ -197,16 +197,15 @@ void printBack(list_t* list) {
 
 
 int main() {
-    int aux;
+    int aux, r;
     void* vp;
     #define bindp(a, b) 0*(a=b) + &a
 
     /*crie a lista*/
     list_t* list = createList(sizeof(int));
-    
     /*Leia a lista*/
-    while(scanf("%d", &aux))
-        insertLast(list, &aux);
+    while((r = scanf("%d", &aux)) && r != EOF)
+        insertLast(list, &aux); 
 
     /*Imprima a lista*/
     printList(list);
@@ -240,8 +239,8 @@ int main() {
 
     /*Remova os 3 últimos nós da lista.*/
     for (aux = 0; aux < 3; aux++){
-        removeLast(list, &vp);
-        free(vp);
+        if (removeLast(list, &vp))
+            free(vp);
     }
 
     /*Imprima a lista.*/
@@ -249,20 +248,20 @@ int main() {
 
     /*Remova os 3 primeiros nós da lista.*/    
     for (aux = 0; aux < 3; aux++){
-        removeFirst(list, &vp);
-        free(vp);
+        if (removeFirst(list, &vp))
+            free(vp);
     }
 
     /*Imprima a lista.*/
     printList(list);
 
     /*Remova o nó que está na última posição da lista.*/
-    removeLast(list, &vp);
-    free(vp);
+    if (removeLast(list, &vp))
+        free(vp);
 
     /*Remova o nó que está na terceira posição da lista.*/
-    removeAt(list, &vp, 2);
-    free(vp);
+    if (removeAt(list, &vp, 2))
+        free(vp);
 
     /*Imprima a lista.*/
     printList(list);
