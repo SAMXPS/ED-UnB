@@ -154,6 +154,28 @@ bool removeAt(list_t* list, void** p_data_loc, unsigned int pos) {
     return true;
 }
 
+bool removeElement(list_t* list, element_t* e) {
+    if (!list || !e) return false;
+
+    if (e->next)
+        e->next->prev = e->prev;
+    else 
+        list->last = e->prev;
+
+    if (e->prev)
+        e->prev->next = e->next;
+    else
+        list->first = e->next;
+
+    if (e->data)
+        free(e->data);
+
+    free(e);
+    
+    list->size --;
+    return true;
+}
+
 bool removeAll(list_t* list) {
     element_t* aux;
     if (!list) return false;

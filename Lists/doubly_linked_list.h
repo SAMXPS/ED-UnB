@@ -33,6 +33,7 @@ bool insertAt(list_t* list, void* data_loc, unsigned int pos);
 bool removeFirst(list_t* list, void** p_data_loc);
 bool removeLast(list_t* list, void** p_data_loc);
 bool removeAt(list_t* list, void** p_data_loc, unsigned int pos);
+bool removeElement(list_t* list, element_t* e);
 
 bool removeAll(list_t* list);
 bool freeList(list_t** list);
