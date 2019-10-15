@@ -32,7 +32,7 @@ bool pop(queue_t* queue, void** p_data_loc) {
     queue->head = e->next;
 
     if (!queue->head || !queue->head->next)
-        queue->tail == queue->head;
+        queue->tail = queue->head;
 
     free(e);
 
