@@ -27,6 +27,7 @@ queue_t*   createQueue(unsigned int data_size);
 bool  push(queue_t* queue, void* data_loc, unsigned int data_size);
 bool  pop(queue_t* queue, void** p_data_loc);
 bool  isEmpty(queue_t* queue);
+bool  removeAll(queue_t* queue);
 
 void* head(queue_t* queue);
 
