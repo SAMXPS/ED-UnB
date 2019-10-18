@@ -9,6 +9,10 @@ Para resolver este problema, resolvi definir alguns conceitos para facilitar o e
 - Um operador representa o que será feito em uma operação, podendo ser do tipo 
 adição (+), subtração(-), multiplicação(*), divisão(/) ou exponenciação (^).
 - Um operador deve sempre estar entre dois operandos.
+- Os operadores possuem precedências diferentes, seguindo a ordem:
+  1. Exponenciação
+  2. Multiplicação e Divisão (ordem em que aparecem)
+  3. Adições e Subtrações (ordem em que aparecem)
 
 ### Operando
 - Um operando representa um número, de forma direta, ou, de forma indireta, uma expressão que, dentro de um contexto, será transformada em um valor numérico.
