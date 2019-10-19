@@ -2,3 +2,4 @@
 *.exe
 *.in
 .vscode/*
+export/*

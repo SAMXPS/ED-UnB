@@ -27,7 +27,7 @@ def get_imports(src):
         newvar = src.find("\"")
 
         if newvar == -1 or newvar > idx2:
-            break
+            continue
 
         inc = src[newvar+1:]
         inc = inc[:inc.find("\"")]
@@ -49,8 +49,9 @@ def export_c_source(fname, trace = []):
                 imports, ns = get_imports(source)
                 acc = 0 
                 for inc in imports:
-                    print("Importing " + inc[1] + " from " + fname)
+                    print("[INFO] Importing " + inc[1] + " from " + fname)
                     imp, trace = export_c_source(os.path.join(os.path.dirname(cpath), inc[1]), trace)
+                    imp += "\n/*[Py-CBuilder] end of file " + inc[1] + "*/\n"
                     ns = ns[:inc[0]+acc] + imp + ns[inc[0]+acc:]
                     acc+= len(imp)
 
@@ -65,11 +66,11 @@ def export_c_source(fname, trace = []):
 
 if len(sys.argv) > 2:
     fromf = sys.argv[1]
-    destf = sys.argv[2]
+    os.mkdir("export") 
+    destf = "export/" + sys.argv[2]
     print("Exporting C-source " + fromf + " into " + destf)
     f = open(destf, 'w')
     exp = export_c_source(fromf)
-    print(exp[1])
     f.write(exp[0])
     print("Done.")
 
