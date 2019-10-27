@@ -1,9 +1,11 @@
 import os
 import subprocess
 
-with subprocess.Popen('gcc -Wall -ansi part1.c -o part1.exe'.split(" "), stdout=subprocess.PIPE) as compa:
-    out = compa.stdout.read()
-    comp = out.decode("utf-8")
+with subprocess.Popen('gcc -Wall -ansi part1.c -o part1.exe'.split(" "), stdout=subprocess.PIPE, stderr=subprocess.PIPE) as compa:
+    outm = compa.stdout.read()
+    comp = outm.decode("utf-8")
+    oute = compa.stderr.read()
+    comp += oute.decode("utf-8")
 
 valid = [
     "1 + 2 * 3",
