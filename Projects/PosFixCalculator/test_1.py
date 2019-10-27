@@ -25,7 +25,7 @@ def test_me(v, exp):
         proc.stdin.write(bytes(v + "\n", 'ascii'))
         proc.stdin.flush()
         out = proc.stdout.read().decode('ascii')
-        if exp in out:
+        if out[:-2] == exp:
             print("[PASS] " + v + ": " + out[:-2])
         else:
             print("[FAIL] " + v + ":" + out[:-2] + "-> (expected: " + exp + ")")

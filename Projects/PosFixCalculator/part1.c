@@ -88,7 +88,7 @@ bool valida(const char* expressao) {
 }
 
 int main() {
-    char expressao[101];a
+    char expressao[101];
     
     scanf("%100[^\n]", expressao);
     
