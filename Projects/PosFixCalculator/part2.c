@@ -1,407 +1,247 @@
-/*
-    
+/*    
     @author: Samuel James
     https://github.com/SAMXPS
     Universidade de Brasília, UnB
 */
-#define DEBUG true
-
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
-/* Definições de caracteres para facilitar o entendimento do código*/
+#ifdef DEBUG
+#define dprint(...) printf(__VA_ARGS__)
+#else
+#define dprint(...) 
+#endif
 
-#define CONTEXT_A       '('
-#define CONTEXT_A_CLOSE ')'
-#define CONTEXT_B       '['
-#define CONTEXT_B_CLOSE ']'
-#define CONTEXT_C       '{'
-#define CONTEXT_C_CLOSE '}'
 
-#define OPERATOR_PLUS   '+'
-#define OPERATOR_MINUS  '-'
-#define OPERATOR_TIMES  '*'
-#define OPERATOR_DIVIDE '/'
-#define OPERATOR_EXP    '^'
+#define BUFFER_LEN 201
+typedef unsigned char byte;
 
-#define NO_CONTEXT        '_'
-#define OPERATION_CONTEXT ';'
+typedef struct str_b {
+    byte len;
+    char buff[BUFFER_LEN];
+} str_b;
 
-#define CONTEXT         'C'
-#define OPERAND         'R'
-#define OPERATOR        '$'
-#define OPERATION       '.'
-#define NUMBER          '#'
+typedef struct list_e {
+    byte data;
+    struct list_e* next;
+} list_e;
 
-/* Definição de Operador */
-typedef char operator;
-
-/* Definição de Operando */
-typedef struct operand {
-    char  type; /* CONTEXT or NUMBER or OPERATION or (temp) CONTEXT_BUILDER*/
-    void* loc;
-} operand;
-
-typedef struct context_e {
-    char  type; /* operand, operator*/
-    void* data;
-} context_e;
-
-/* Definição de Operação */
-typedef struct operation {
-    operand  a;
-    operand  b;
-    operator op;
-} operation;
-
-typedef struct context {
-    char type;
-    operation operation;
-} context;
-
-typedef struct stack_e {
-    struct stack_e* next;
-    unsigned int data_len;
-} stack_e;
-
-typedef struct context_builder {
-    char type;
-    stack_e* context_stack;
-} context_builder;
-
-/* Implementação de stack genérica */
-
-stack_e* createStackElement(void* data, unsigned int data_len) {
-    stack_e* e = malloc(sizeof(stack_e) + data_len);
-    if (e) {
-        e->next = NULL;
-        e->data_len = data_len;
-        memcpy((e+sizeof(void*)), data, data_len);
-    }
-    return e;
+void listAddFirst(list_e** list, byte data) {
+    list_e* e = malloc(sizeof(list_e));
+    e->next = *list;
+    e->data = data;
+    *list = e;
 }
 
-bool stackPush(stack_e** stack, void* data, unsigned int data_len) {
-    if (!stack) return false;
-    stack_e* e = createStackElement(data, data_len);
-    e->next = *stack;
-    *stack = e;
-    return true;
+void listAddLast(list_e** list, byte data) {
+    while (*list) list = &(*list)->next;
+    return listAddFirst(list, data);
 }
 
-bool stackPop(stack_e** stack, stack_e** pop, void** data_loc) {
-    if (!stack || !(*stack)) return false;
-    *pop = *stack;
-    *data_loc = *pop + sizeof(stack_e);
-    *stack = (*stack)->next;
-    return true;
-}
-
-/* fim da implementação de Stack */
-
-unsigned char operator_precedence(char op) {
-    if (op == OPERATOR_PLUS || op == OPERATOR_MINUS) {
-        return 5;
-    }
-    if (op == OPERATOR_TIMES || op == OPERATOR_DIVIDE) {
-        return 3;
-    }
-    if (op == OPERATOR_EXP) {
-        return 1;
-    }
-    return 255;
-}
-
-context_e createOperatorE (char op_type) {
-    context_e e;
-    e.type = OPERATOR;
-    e.data = malloc(sizeof(char));
-    if (e.data) *(char*)(e.data) = op_type;
-    return e;
-}
-
-context_e createOperandE (operand op) {
-    context_e e;
-    e.type = OPERAND;
-    e.data = malloc(sizeof(operand));
-    if (e.data) *(operand*)(e.data) = op;
-    return e;
-}
-
-/* Create the operand and copies the data into it*/
-operand createOperand(char type, void* data) {
-    operand op;
-    op.type = type;
-    unsigned int len; 
-    if (type == OPERATOR) {
-        len = sizeof(operator);
-    } else if (type == OPERATION) {
-        len = sizeof(operation);
-    } else if (type == NUMBER) {
-        len = sizeof(double);
-    } else if (type == OPERATION_CONTEXT) {
-        len = sizeof(context_builder);
-    }
-    op.loc = malloc(len);
-    if (op.loc) {
-        memcpy(op.loc, data, len);
-    }
-    return op;   
-}
-
-context_builder* createContextBuilder(char type) {
-    context_builder* cb = calloc(1, sizeof(context_builder));
-    if (cb) {
-        cb->type = type;
-    }
-    return cb;
-}
-
-bool contextBuilderForce(context_builder *cb, context_e* e) {
-    if (!cb) return false;
-    return stackForce(&cb->context_stack, e, sizeof(context_e));
-}
-
-bool contextBuilderPush(context_builder *cb, context_e* e) {
-    if (!cb) return false;
-    return stackPush(&cb->context_stack, e, sizeof(context_e));
-}
-
-bool contextBuilderPop(context_builder *cb, context_e* e) {
-    context_e* data;
-    stack_e* pop;
-    if (!stackPop(&cb->context_stack, &pop, (void**) &data)) return false;
-    *e = *data;
-    free(pop);
-    return true;
-}
-
-bool buildContext(context_builder *cb, context** ctx) {
-    context *cx = malloc(sizeof(context));
-    context* tmp;
-
-    context_e aux;
-    context_e last;
-    context_e more;
-
-    last.data = NULL;
-    last.type = OPERATOR;
-
-    operator lastOperator = 0;
-    operator currOperator = 0;
-    operand lastOperand, currOperand;
-
-    operation myop;
-
-    currOperand.type = 0;
-    currOperand.loc = NULL;
-
-    bool err = 1;
-
-    if (cx) {
-        err = 0;
-        cx->type = cb->type;
-        while (contextBuilderPop(cb, &aux) && !err) {
-            if (last.type == OPERAND && aux.type == OPERATOR) {
-                lastOperator = currOperator;
-                currOperator = *(operator*)aux.data;
-                if (lastOperator && currOperator) {
-                    if (operator_precedence(currOperator) < operator_precedence(lastOperator)) {
-                        context_builder* b = createContextBuilder(OPERATION_CONTEXT);
-
-                        more = createOperatorE(lastOperator);
-                        contextBuilderPush(b, &more);
-                        more = createOperandE(lastOperand);
-                        contextBuilderPush(b, &more);
-                        more = createOperandE(currOperand);
-                        contextBuilderPush(b, &more);
-
-                        currOperand = createOperand(OPERATION_CONTEXT, b);
-                        free(b);
-                    } else {
-                        mec:
-                        if (lastOperand.type == OPERATION_CONTEXT) {
-                            context_builder* b = (context_builder*) lastOperand.loc;
-                            contextBuilderPop(b, &more);
-                            lastOperand = * (operand*) more.data;
-                            myop.a = currOperand;
-                            myop.b = lastOperand;
-                            myop.op = lastOperator;
-                            more = createOperandE(createOperand(OPERATION, &myop));
-                            contextBuilderForce(b, &more);
-
-                            if (!buildContext(b, &tmp)) {
-                                printf ("MASUE\n");
-                                err =1;
-                            } else {
-                                myop = tmp->operation;
-                                free (tmp);
-                            }
-                        } else {
-                            myop.a = currOperand;
-                            myop.b = lastOperand;
-                            myop.op = lastOperator;
-                            //lastOperand = NULL;
-                        }
-                        currOperand = createOperand(OPERATION, &myop);
-                    }
-                }
-            } else if (last.type == OPERATOR && aux.type == OPERAND) {
-                lastOperand = currOperand;
-                currOperand = *(operand*)aux.data;
-            } else err = 1;
-
-            free(last.data);
-            last = aux;
-        }
-        if (last.type != OPERAND) err = 1;
-        free(last.data);
-    }
-    if (!err) {
-        /* TODO: FIX REPEATED CODE */
-        if (lastOperand.type == OPERATION_CONTEXT) {
-            context_builder* b = (context_builder*) lastOperand.loc;
-            contextBuilderPop(b, &more);
-            lastOperand = * (operand*) more.data;
-            myop.a = currOperand;
-            myop.b = lastOperand;
-            myop.op = lastOperator;
-            more = createOperandE(createOperand(OPERATION, &myop));
-            contextBuilderForce(b, &more);
-
-            if (!buildContext(b, &tmp)) {
-                printf ("MASUE\n");
-                err =1;
-            } else {
-                myop = tmp->operation;
-                free (tmp);
-            }
-        } else {
-            myop.a = currOperand;
-            myop.b = lastOperand;
-            myop.op = lastOperator;
-            //lastOperand = NULL;
-        }
-        cx->operation = myop;
-
-        *ctx = cx;
-        free(cb);
+bool listPop(list_e** list, unsigned int pos, byte* loc) {
+    if (!*list) return false;
+    list_e* e;
+    if (pos == 0) {
+        e = *list;
+        if (loc)
+            *loc = e->data;
+        *list = e->next;
+        free(e);
         return true;
-    }
+    } else return listPop(&(*list)->next, pos-1, loc);
+}
 
-    /* TODO: clear the context*/
-    free(cx);
+void builderAppendCh(str_b* b, char c) {
+    b->buff[b->len++] = c;
+}
+
+void builderAppendStr(str_b* b, char* str) {
+    int s = strlen(str);
+    memcpy(b->buff + b->len, str, s);
+    b->len += s;
+}
+
+char* buildString(str_b* b) {
+    char* str = malloc(b->len + 1);
+    memcpy(str, b->buff, b->len);
+    str[b->len] = 0;
+    return str;
+}
+
+char ctx_open  [] = {'(', '[', '{'};
+char ctx_close [] = {')', ']', '}'};
+char operators [] = {'^', '*', '/', '+', '-'};
+char precedence[] = { 1 ,  2 ,  2 ,  3 ,  3 };
+
+bool _isPart(char c, char* l, int s) {
+    int i;
+    for (i=0; i<s; i++)
+        if(l[i] == c) return true;
     return false;
 }
+#define isPart(a, b) _isPart(a, b, sizeof(b))
 
-
-/* Para ordenar as operações conforme precedência de operador*/
-/* < 0 : a first, == 0 equal, > 0 : b first*/
-int cmp_operator_precedence(char* a, char* b) {
-    return ((int) operator_precedence(*a) - (int) operator_precedence(*b));
+int idx(char c, char*l) {
+    int i;
+    for (i=0;; i++)
+        if(l[i] == c) return i;
 }
 
-bool isContextOpen(char code) {
-    return code == CONTEXT_A || 
-           code == CONTEXT_B ||
-           code == CONTEXT_C;
+int prec(char op) {
+    return precedence[idx(op, operators)];
 }
 
-bool isContextClose(char code) {
-    return code == CONTEXT_A_CLOSE ||
-           code == CONTEXT_B_CLOSE ||
-           code == CONTEXT_C_CLOSE;
+bool isNumber(char c) {
+    return c == '.' || ((c = (c - '0')) >= 0 && c < 10);
 }
 
-/* Função que lê um número real a partir da string */
-int readNumber(char* str, char** up, double* loc) {
-    char* diff = str;
-    *loc = strtod(str, &diff);
-    if (up) *up = diff;
-    return diff-str;
-}
-
-/* Read non-white character */
-char readNwChar(char** str) {
-    while(**str == ' ' && (*str)++);
-    return **str;
-}
-
-void printContext(const context* ctx);
-void printOperation(const operation op);
-
-void printOperand(const operand op) {
-    if (op.type == NUMBER) {
-        printf("%.0lf", *(double*)op.loc);
-        return;
-    } 
-    if (op.type == CONTEXT) {
-        printContext((context*)op.loc);
-        return;
-    }
-    if (op.type == OPERATION) {
-        printOperation(*(operation*)op.loc);
-        return;
-    }
-    printf("UNK");
-}
-
-void printOperation(const operation op) {
-    printOperand(op.a);
-    printf(" %c ", op.op);
-    printOperand(op.b);
-}
-
-void printContext(const context* ctx) {
-    printf("%c", ctx->type);
-    printOperation(ctx->operation);
-    printf("%c", ctx->type + (ctx->type == '(' ?  1 : 2));
-}
-
-bool validate(char* expr) {
-    char* aux = expr;
-    double num;
-    char   op;
-    context_e tmp;
-
-    context_builder *cb = createContextBuilder(NO_CONTEXT);
-    printf("%%b");
-    while (*aux) {
-        if (readNumber(aux, &aux, &num)) {
-            printf("n");
-            tmp = createOperandE(createOperand(NUMBER, &num));
-            contextBuilderPush(cb, &tmp);
-        } else {
-            op = readNwChar(&aux);
-            if (op) {
-                printf("c");
-                tmp = createOperatorE(op);
-                contextBuilderPush(cb, &tmp);
+int contextLen(char* str) {
+    int inside = 0, pos = 1;
+    while(str[pos]) {
+        if (isPart(str[pos], ctx_open)) inside++;
+        else if (isPart(str[pos], ctx_close)) {
+            if (!inside) {
+                return pos-1;    
             }
+            else inside--;
+        }
+        pos++;
+    }
+    return -1;
+}
+
+char* my_context;
+
+int mycmp(byte a, byte b) {
+    int d = prec(my_context[a]) - prec(my_context[b]);
+    if (!d && prec(my_context[a]) == 1) {
+        return b - a;
+    }
+    return d;
+}
+
+char* convert(char* exp, int len);
+
+void addNm(str_b*b, char* exp, list_e** nms) {
+    byte d;
+    char* proc;
+    listPop(nms, 0, &d);
+    dprint("N%d", d);
+    if (isPart(exp[d], ctx_open)) {
+        dprint("Exploding context at %d [len=%d]\n", d, contextLen(exp + d));
+        proc = convert(exp + d + 1, contextLen(exp + d));
+        dprint("Context %d result: %s\n", d, proc);
+        builderAppendStr(b, proc);
+        if (strlen(proc))
+            builderAppendCh(b, ' ');
+        free(proc);
+        return;
+    } else while (isNumber(exp[d])) {
+        builderAppendCh(b, exp[d]);
+        d++;
+    }
+    builderAppendCh(b, ' ');
+}
+
+void addOp(str_b*b, char* exp, list_e** ops) {
+    byte d;
+    listPop(ops, 0, &d);
+    dprint(".%d", d);
+    builderAppendCh(b, exp[d]);
+    builderAppendCh(b, ' ');
+}
+
+int feedUpTo(str_b* sb, char* exp, list_e** nms, byte p) {
+    int n = 0;
+    while (*nms && (*nms)->data < p) {
+        addNm(sb, exp, nms);
+        n++;
+    }           
+    return n;
+}
+
+char* process(char* exp, list_e* ops, list_e* nms) {
+    str_b sb = {0};
+    list_e* wait = NULL;
+    unsigned char o_c = 0, n_c = 0;
+    if (!ops && nms) {
+        addNm(&sb, exp, &nms);
+        n_c++;
+    } else while (ops || wait) {
+        my_context = exp;
+        if (wait && (!ops || mycmp(wait->data, ops->data) <= 0)) {
+            n_c += feedUpTo(&sb, exp, &nms, wait->data);
+            addOp(&sb, exp, &wait);
+        } else if (ops && ops->next && mycmp(ops->data, ops->next->data) > 0){
+            listAddFirst(&wait, ops->data);
+            listPop(&ops, 0, NULL);
+        } else {
+            o_c++;
+            n_c += 1 + feedUpTo(&sb, exp, &nms, ops->data);
+            addNm(&sb, exp, &nms); 
+            addOp(&sb, exp, &ops);
         }
     }
 
-    context* x;
-    if (buildContext(cb, &x)) {
-        return true;
-    }
-    return false;
+    if (sb.len && sb.buff[sb.len-1] == ' ')
+        sb.len--;
+    return buildString(&sb);
 }
 
+char* convert(char* exp, int len) {
+    int p = 0, i;
+    #define curr exp[p]
+    list_e* ops = NULL;
+    list_e* nms = NULL;
 
+    while(p<len) {
+        if (curr == ' ') {
+            p++;
+            continue;
+        }
 
-/* Função main dada pelo problema */
+        if (isPart(curr, operators)) {
+            listAddLast(&ops, (byte) p);
+            dprint("Operator at %d\n", p);
+            p++;
+            continue;
+        }
+
+        if (isPart(curr, ctx_open)) {
+            listAddLast(&nms, (byte) p);
+            i = contextLen(exp + p);
+            dprint("Context found at %d [len=%d]\n", p, i);
+            p += 2 + i;
+            continue;
+        }
+
+        if (isNumber(curr)) {
+            listAddLast(&nms, (byte) p);
+            dprint("Number found at %d\n", p);
+            while(isNumber(curr)) p++;
+            continue;
+        }
+
+        p++;
+    }
+    return process(exp, ops, nms);
+}
+
+void transforma(char* infixa, char* posfixa) {
+    char* r = convert(infixa, strlen(infixa));
+    strcpy(posfixa, r);
+    free(r);
+    dprint("\n");
+}
+
 int main() {
-    char expr[101];
-    
-    scanf("%100[^\n]", expr);
-    if (validate(expr))
-        printf("VALIDA\n");
-    else
-        printf("INVALIDA\n");
-        
+    char infixa[101], posfixa[201];
+
+    scanf("%100[^\n]", infixa);
+    transforma(infixa, posfixa);
+    printf("%s\n", posfixa);
+
     return 0;
 }
