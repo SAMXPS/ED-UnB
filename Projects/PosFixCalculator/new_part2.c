@@ -1,5 +1,4 @@
-/*
-    
+/*    
     @author: Samuel James
     https://github.com/SAMXPS
     Universidade de Brasília, UnB
@@ -8,6 +7,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#ifdef DEBUG
+#define dprint(...) printf(__VA_ARGS__)
+#else
+#define dprint(...) 
+#endif
+
 
 #define BUFFER_LEN 201
 typedef unsigned char byte;
@@ -35,7 +41,8 @@ void listAddLast(list_e** list, byte data) {
 }
 
 void listPush(list_e** list, byte data, int (*comp)(byte a, byte b)) {
-    while (*list && comp(data, (*list)->data) >= 0) list = &(*list)->next;
+    while (*list && (*list)->next && (*list)->next->data > (*list)->data) list = &(*list)->next;
+    if (*list && (*comp)(data, (*list)->data) >= 0) list = &(*list)->next;
     return listAddFirst(list, data);
 }
 
@@ -96,7 +103,7 @@ bool isNumber(char c) {
 }
 
 int contextLen(char* str) {
-    int inside = 0, pos = 0;
+    int inside = 0, pos = 1;
     while(str[pos]) {
         if (isPart(str[pos], ctx_open)) inside++;
         else if (isPart(str[pos], ctx_close)) {
@@ -113,7 +120,11 @@ int contextLen(char* str) {
 char* my_context;
 
 int mycmp(byte a, byte b) {
-    return prec(my_context[a]) - prec(my_context[b]);
+    int d = prec(my_context[a]) - prec(my_context[b]);
+    if (!d && prec(my_context[a]) == 1) {
+        return b - a;
+    }
+    return d;
 }
 
 char* convert(char* exp, int len);
@@ -122,9 +133,11 @@ void addNm(str_b*b, char* exp, list_e** nms) {
     byte d;
     char* proc;
     listPop(nms, 0, &d);
-    printf("N%d", d);
+    dprint("N%d", d);
     if (isPart(exp[d], ctx_open)) {
+        dprint("Exploding context at %d [len=%d]\n", d, contextLen(exp + d));
         proc = convert(exp + d + 1, contextLen(exp + d));
+        dprint("Context %d result: %s\n", d, proc);
         builderAppendStr(b, proc);
         if (strlen(proc))
             builderAppendCh(b, ' ');
@@ -140,27 +153,33 @@ void addNm(str_b*b, char* exp, list_e** nms) {
 void addOp(str_b*b, char* exp, list_e** ops) {
     byte d;
     listPop(ops, 0, &d);
-    printf(".%d", d);
+    dprint(".%d", d);
     builderAppendCh(b, exp[d]);
     builderAppendCh(b, ' ');
 }
 
 char* process(char* exp, list_e* ops, list_e* nms) {
-    str_b sb = {0}; 
+    str_b sb = {0};
+
+    if (nms) {
+        addNm(&sb, exp, &nms);
+    }
     while (ops) {
         while(nms && nms->data < ops->data) {
             addNm(&sb, exp, &nms);
         }
-        if (nms) {
+        if (nms && (!ops->next || ops->next->data < ops->data || nms->data < ops->next->data)) {
             addNm(&sb, exp, &nms);
         }
         addOp(&sb, exp, &ops);
     }
+    if (sb.len && sb.buff[sb.len-1] == ' ')
+        sb.len--;
     return buildString(&sb);
 }
 
 char* convert(char* exp, int len) {
-    int p = 0;
+    int p = 0, i;
     #define curr exp[p]
     list_e* ops = NULL;
     list_e* nms = NULL;
@@ -174,18 +193,22 @@ char* convert(char* exp, int len) {
         if (isPart(curr, operators)) {
             my_context = exp;
             listPush(&ops, (byte) p, &mycmp);
+            dprint("Operator at %d\n", p);
             p++;
             continue;
         }
 
         if (isPart(curr, ctx_open)) {
             listAddLast(&nms, (byte) p);
-            p+= 2 + contextLen(exp + p);
+            i = contextLen(exp + p);
+            dprint("Context found at %d [len=%d]\n", p, i);
+            p += 2 + i;
             continue;
         }
 
         if (isNumber(curr)) {
             listAddLast(&nms, (byte) p);
+            dprint("Number found at %d\n", p);
             while(isNumber(curr)) p++;
             continue;
         }
@@ -199,6 +222,7 @@ void transforma(char* infixa, char* posfixa) {
     char* r = convert(infixa, strlen(infixa));
     strcpy(posfixa, r);
     free(r);
+    dprint("\n");
 }
 
 int main() {
@@ -206,7 +230,7 @@ int main() {
 
     scanf("%100[^\n]", infixa);
     transforma(infixa, posfixa);
-    printf("\n%s\n", posfixa);
+    printf("%s\n", posfixa);
 
     return 0;
 }
