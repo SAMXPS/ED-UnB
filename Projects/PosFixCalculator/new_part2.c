@@ -40,18 +40,13 @@ void listAddLast(list_e** list, byte data) {
     return listAddFirst(list, data);
 }
 
-void listPush(list_e** list, byte data, int (*comp)(byte a, byte b)) {
-    while (*list && (*list)->next && (*list)->next->data > (*list)->data) list = &(*list)->next;
-    if (*list && (*comp)(data, (*list)->data) >= 0) list = &(*list)->next;
-    return listAddFirst(list, data);
-}
-
 bool listPop(list_e** list, unsigned int pos, byte* loc) {
     if (!*list) return false;
     list_e* e;
     if (pos == 0) {
         e = *list;
-        *loc = e->data;
+        if (loc)
+            *loc = e->data;
         *list = e->next;
         free(e);
         return true;
@@ -158,21 +153,38 @@ void addOp(str_b*b, char* exp, list_e** ops) {
     builderAppendCh(b, ' ');
 }
 
+int feedUpTo(str_b* sb, char* exp, list_e** nms, byte p) {
+    int n = 0;
+    while (*nms && (*nms)->data < p) {
+        addNm(sb, exp, nms);
+        n++;
+    }           
+    return n;
+}
+
 char* process(char* exp, list_e* ops, list_e* nms) {
     str_b sb = {0};
-
-    if (nms) {
+    list_e* wait = NULL;
+    unsigned char o_c = 0, n_c = 0;
+    if (!ops && nms) {
         addNm(&sb, exp, &nms);
-    }
-    while (ops) {
-        while(nms && nms->data < ops->data) {
-            addNm(&sb, exp, &nms);
+        n_c++;
+    } else while (ops || wait) {
+        my_context = exp;
+        if (wait && (!ops || mycmp(wait->data, ops->data) <= 0)) {
+            n_c += feedUpTo(&sb, exp, &nms, wait->data);
+            addOp(&sb, exp, &wait);
+        } else if (ops && ops->next && mycmp(ops->data, ops->next->data) > 0){
+            listAddFirst(&wait, ops->data);
+            listPop(&ops, 0, NULL);
+        } else {
+            o_c++;
+            n_c += 1 + feedUpTo(&sb, exp, &nms, ops->data);
+            addNm(&sb, exp, &nms); 
+            addOp(&sb, exp, &ops);
         }
-        if (nms && (!ops->next || ops->next->data < ops->data || nms->data < ops->next->data)) {
-            addNm(&sb, exp, &nms);
-        }
-        addOp(&sb, exp, &ops);
     }
+
     if (sb.len && sb.buff[sb.len-1] == ' ')
         sb.len--;
     return buildString(&sb);
@@ -191,8 +203,7 @@ char* convert(char* exp, int len) {
         }
 
         if (isPart(curr, operators)) {
-            my_context = exp;
-            listPush(&ops, (byte) p, &mycmp);
+            listAddLast(&ops, (byte) p);
             dprint("Operator at %d\n", p);
             p++;
             continue;
