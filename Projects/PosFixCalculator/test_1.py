@@ -29,15 +29,24 @@ def test_me(v, exp):
         out = proc.stdout.read().decode('ascii')
         if out[:-2] == exp:
             print("[PASS] " + v + ": " + out[:-2])
+            return 1
         else:
             print("[FAIL] " + v + ":" + out[:-2] + "-> (expected: " + exp + ")")
+            return 0
 
 
 if len(comp) > 0:
     print("Test interrupted by compilation problems/warnings:")
     print(comp)
 else:
+    t = 0
+    p = 0
     for v in valid:
-        test_me(v, "VALIDA")
+        t+=1
+        if test_me(v, "VALIDA"):
+            p+=1
     for v in invalid:
-        test_me(v, "INVALIDA")
+        t+=1
+        if test_me(v, "INVALIDA"):
+            p+=1
+    print("Success rate: " + ("%.1f" % (100*(p/t))) +"%")
