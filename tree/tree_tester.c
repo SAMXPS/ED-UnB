@@ -81,7 +81,10 @@ ab_char* le_arvore(char** in) {
 }
 
 void em_lista(ab_char **p_raiz);
-
+#define printa(f) 	mostra_arvore(f);\
+	printf("\n");\
+	printf("rotacoes executadas: %d\n", ___re); \
+	___re =0;
 int main () {
 	
 	char *in_outra_raiz = "(a(b()())(c()()))";
@@ -94,42 +97,32 @@ int main () {
 	printf("\n");
 	mostra_arvore(raiz);
 	printf("\n");
-	return 1;
 	
 	em_lista(NULL);
-	mostra_arvore(NULL);
-	printf("\n");
-	printf("rotacoes executadas: %d\n", ___re); 
-	___re =0;
+	printa(NULL);
 	
 	em_lista(&(outra_raiz->esq));
-	mostra_arvore(outra_raiz);
-	printf("\n");
-	printf("rotacoes executadas: %d\n", ___re); 
-	___re =0;
+	printa(outra_raiz);
+
 	
 	em_lista(&(outra_raiz->dir));
-	mostra_arvore(outra_raiz);
-	printf("\n");
-	printf("rotacoes executadas: %d\n", ___re); 
-	___re =0;
+	printa(outra_raiz);
 	
 	em_lista(&outra_raiz);
-	mostra_arvore(outra_raiz);
-	printf("\n");
-	printf("rotacoes executadas: %d\n", ___re); 
-	___re =0;
+	printa(outra_raiz);
 	
 	em_lista(&(raiz->esq));
-	mostra_arvore(raiz);
-	printf("\n");
-	printf("rotacoes executadas: %d\n", ___re); 
-	___re =0;
+	printa(raiz);
+	
+	em_lista(&(raiz->dir));
+	printa(raiz);
+	 	
+
+	em_lista(&raiz);
+	printa(raiz);
 	
 	limpa_arvore(&outra_raiz);	
 	limpa_arvore(&raiz);
-	printf("rotacoes executadas: %d\n", ___re); 
-	___re =0;
 	
 	return 1;
 }
