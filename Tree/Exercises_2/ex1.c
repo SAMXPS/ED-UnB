@@ -124,7 +124,7 @@ int main () {
 	limpa_arvore(&outra_raiz);	
 	limpa_arvore(&raiz);
 	
-	return 1;
+	return 0;
 }
 
 
