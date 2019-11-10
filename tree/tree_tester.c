@@ -131,5 +131,11 @@ int main () {
 #endif
 
 void em_lista(ab_char **p_raiz) {
-	
+	if (p_raiz && *p_raiz) {
+		if ((*p_raiz)->esq) em_lista(&(*p_raiz)->esq);
+		if ((*p_raiz)->dir) {
+			rotaciona_esquerda(p_raiz);
+			em_lista(p_raiz);
+		}
+	} 
 }
