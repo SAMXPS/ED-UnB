@@ -13,12 +13,10 @@ adição (+), subtração(-), multiplicação(*), divisão(/) ou exponenciação
   1. Exponenciação
   2. Multiplicação e Divisão (ordem em que aparecem)
   3. Adições e Subtrações (ordem em que aparecem)
+- As operações de exponenciação que estiverem em sequência devem ser realizadas da direita para a esquerda, enquanto as dos outros operadores devem ser realizadas da esquerda para direita
 
 ### Operando
 - Um operando representa um número, de forma direta, ou, de forma indireta, uma expressão que, dentro de um contexto, será transformada em um valor numérico.
-
-### Operação
-- Uma operação é o conjunto de dois operandos e um operador.
 
 ### Contexto
 - Um contexto representa um conjunto de operações a serem realizadas em uma ordem específica.

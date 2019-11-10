@@ -14,7 +14,6 @@
 #define dprint(...) 
 #endif
 
-
 #define BUFFER_LEN 201
 typedef unsigned char byte;
 
